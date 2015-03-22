@@ -17,4 +17,48 @@ Crypt comes with a command-line utility to generate new keys:
 
     java -jar crypt.jar ca.krasnay.crypt.GenerateKey
 
+## Spring Example
 
+Here is an example implementation using Spring. First, generate a key and add it to your application properties file. This file should *not* be part of your source code, but rather should be created separately for each environment in which your application is stored. It should also have restrictive permissions such that only the user account that executes your application can access it. Finally, don't use *this* key; generate your own!
+
+    encryptionKeys=2AXTw9lTJUhW0wqKDWMsvw==
+
+Now create a configuration that defines the encryption service as a Spring bean:
+
+    @Configuration
+    public class EncryptionConfig {
+
+        @Value("${encryptionKeys}")
+        private String encryptionKeys;
+
+        @Bean
+        public EncryptionService encryptionService() {
+            String[] keys = encryptionKeys.split("\\s*,\\s*");
+            return new EncryptionServiceImpl(Arrays.asList(keys));
+        }
+    }
+
+The encryption service is typically used in a DAO when reading or writing domain objects to/from the database:
+
+    public class WidgetDaoImpl implements WidgetDao {
+
+        @Inject
+        private EncryptionService encryptionService;
+
+        public void insert(Widget widget) {
+            widget.setPrivateData(encryptionService.encryptString(widget.getPrivateData()));
+            // insert widget
+        }
+
+        public Widget findById(int widgetId) {
+            Widget widget = // find widget given widgetId
+            widget.setPrivateData(encryptionService.decryptString(widget.getPrivateData()));
+            return widget;
+        }
+    }
+
+To rotate keys, generate a new key and append it to the `encryptionKeys` property:
+
+    encryptionKeys=2AXTw9lTJUhW0wqKDWMsvw==,axfHfv2ofahVeAYH4pIutg==
+
+Then, create a background task that reads and updates each widget via the DAO. Since the encryption service will accept any configured key to decrypt but will use the last configured key when encrypting, this will cause your data to be encrypted with the newest key.
