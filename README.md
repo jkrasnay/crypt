@@ -62,3 +62,9 @@ To rotate keys, generate a new key and append it to the `encryptionKeys` propert
     encryptionKeys=2AXTw9lTJUhW0wqKDWMsvw==,axfHfv2ofahVeAYH4pIutg==
 
 Then, create a background task that reads and updates each widget via the DAO. Since the encryption service will accept any configured key to decrypt but will use the last configured key when encrypting, this will cause your data to be encrypted with the newest key.
+
+## License
+
+Crypt is licensed under the Apache License 2.0.
+
+
